@@ -1,0 +1,36 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: g++.exe アクティブなファイルのビルド",
+            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "--std=c++17",
+                "${file}",
+                "-I${workspaceFolder}/deps/glfw/include",
+                "-I${workspaceFolder}/deps/glad",
+                "-I${workspaceFolder}/deps/glm",
+                "-L${workspaceFolder}/deps/glfw/lib-mingw-w64",
+                "-lopengl32",
+                "-lglu32",
+                "-lglfw3",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}.exe"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "デバッガーによって生成されたタスク。"
+        }
+    ],
+    "version": "2.0.0"
+}
