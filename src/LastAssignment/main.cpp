@@ -6,32 +6,27 @@
 #include <vector>
 #include <algorithm>
 
-#define GLAD_GL_IMPLEMENTATION
 #include <glad/gl.h>
+#include "shaders.h"
+
 
 #define GLFW_DLL
 #define GLFW_INCLUDE_GLU
 #include <GLFW/glfw3.h>
 
-#define GLM_FORCE_RADIANS        // ラジアン単位の角度を使うことを強制する
-#define GLM_ENABLE_EXPERIMENTAL  // glm/gtx/**.hppを使うのに必要
+#define GLM_FORCE_RADIANS        
+#define GLM_ENABLE_EXPERIMENTAL  
 #include <glm/glm.hpp>
-// glm::vec型をポインタに変換 / Convert glm::vec types to pointer
 #include <glm/gtc/type_ptr.hpp>
-// GLMの行列変換のためのユーティリティ関数 GLM's utility functions for matrix transformation
 #include <glm/gtx/transform.hpp>
 
-// 画像のパスなどが書かれた設定ファイル
-// Config file storing image locations etc.
+
 #include "common.h"
 
-static int WIN_WIDTH = 500;                      // ウィンドウの幅 / Window width
-static int WIN_HEIGHT = 500;                     // ウィンドウの高さ / Window height
-static const char *WIN_TITLE = "OpenGL Course";  // ウィンドウのタイトル / Window title
 
-// シェーダ言語のソースファイル / Shader source files
-static std::string VERT_SHADER_FILE = std::string(SHADER_DIRECTORY) + "render.vert";
-static std::string FRAG_SHADER_FILE = std::string(SHADER_DIRECTORY) + "render.frag";
+static int WIN_WIDTH = 500;
+static int WIN_HEIGHT = 500;
+static const char *WIN_TITLE = "OpenGL Course";
 
 // 頂点クラス
 // Vertex class
@@ -81,10 +76,6 @@ static const unsigned int faces[12][3] = {
 GLuint vaoId;
 GLuint vertexBufferId;
 GLuint indexBufferId;
-
-// シェーダプログラムを参照する番号
-// Index for a shader program
-GLuint programId;
 
 // マウスドラッグ中かどうか
 // Flag to check mouse is dragged or not
@@ -164,144 +155,9 @@ void initVAO() {
     glBindVertexArray(0);
 }
 
-// シェーダのソースファイルをコンパイルする
-// Compile a shader source
-GLuint compileShader(const std::string &filename, GLuint type) {
-    // シェーダの作成
-    // Create a shader
-    GLuint shaderId = glCreateShader(type);
-
-    // ファイルの読み込み
-    // Load source file
-    std::ifstream reader;
-    std::string code;
-
-    // ファイルを開く
-    // Open source file
-    reader.open(filename.c_str(), std::ios::in);
-    if (!reader.is_open()) {
-        // ファイルを開けなかったらエラーを出して終了
-        // Finish with error message if source file could not be opened
-        fprintf(stderr, "Failed to load a shader: %s\n", filename.c_str());
-        exit(1);
-    }
-
-    // ファイルをすべて読んで変数に格納
-    // Load entire contents of a file and store to a string variable
-    {
-        // ファイル読み取り位置を終端に移動 / Move seek position to the end
-        reader.seekg(0, std::ios::end);
-        // コードを格納する変数の大きさを予約 / Reserve memory location for code characters
-        code.reserve(reader.tellg());
-        // ファイルの読み取り位置を先頭に移動 / Move seek position back to the beginning
-        reader.seekg(0, std::ios::beg);
-
-        // 先頭からファイルサイズ分を読んでコードの変数に格納
-        // Load entire file and copy to "code" variable
-        code.assign(std::istreambuf_iterator<char>(reader),
-                    std::istreambuf_iterator<char>());
-    }
-
-    // ファイルを閉じる
-    // Close file
-    reader.close();
-
-    // コードのコンパイル
-    // Compile a source code
-    const char *codeChars = code.c_str();
-    glShaderSource(shaderId, 1, &codeChars, NULL);
-    glCompileShader(shaderId);
-
-    // コンパイルの成否を判定する
-    // Check whther compile is successful
-    GLint compileStatus;
-    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &compileStatus);
-    if (compileStatus == GL_FALSE) {
-        // コンパイルが失敗したらエラーメッセージとソースコードを表示して終了
-        // Terminate with error message if compilation failed
-        fprintf(stderr, "Failed to compile a shader!\n");
-
-        // エラーメッセージの長さを取得する
-        // Get length of error message
-        GLint logLength;
-        glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &logLength);
-        if (logLength > 0) {
-            // エラーメッセージを取得する
-            // Get error message
-            GLsizei length;
-            std::string errMsg;
-            errMsg.resize(logLength);
-            glGetShaderInfoLog(shaderId, logLength, &length, &errMsg[0]);
-
-            // エラーメッセージとソースコードの出力
-            // Print error message and corresponding source code
-            fprintf(stderr, "[ ERROR ] %s\n", errMsg.c_str());
-            fprintf(stderr, "%s\n", code.c_str());
-        }
-        exit(1);
-    }
-
-    return shaderId;
-}
-
-// シェーダプログラムのビルド (=コンパイル＋リンク)
-// Build a shader program (build = compile + link)
-GLuint buildShaderProgram(const std::string &vShaderFile, const std::string &fShaderFile) {
-    // 各種シェーダのコンパイル
-    // Compile shader files
-    GLuint vertShaderId = compileShader(vShaderFile, GL_VERTEX_SHADER);
-    GLuint fragShaderId = compileShader(fShaderFile, GL_FRAGMENT_SHADER);
-
-    // シェーダプログラムへのリンク
-    // Link shader objects to the program
-    GLuint programId = glCreateProgram();
-    glAttachShader(programId, vertShaderId);
-    glAttachShader(programId, fragShaderId);
-    glLinkProgram(programId);
-
-    // リンクの成否を判定する
-    // Check whether link is successful
-    GLint linkState;
-    glGetProgramiv(programId, GL_LINK_STATUS, &linkState);
-    if (linkState == GL_FALSE) {
-        // リンクに失敗したらエラーメッセージを表示して終了
-        // Terminate with error message if link is failed
-        fprintf(stderr, "Failed to link shaders!\n");
-
-        // エラーメッセージの長さを取得する
-        // Get length of error message
-        GLint logLength;
-        glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &logLength);
-        if (logLength > 0) {
-            // エラーメッセージを取得する
-            // Get error message
-            GLsizei length;
-            std::string errMsg;
-            errMsg.resize(logLength);
-            glGetProgramInfoLog(programId, logLength, &length, &errMsg[0]);
-
-            // エラーメッセージを出力する
-            // Print error message
-            fprintf(stderr, "[ ERROR ] %s\n", errMsg.c_str());
-        }
-        exit(1);
-    }
-
-    // シェーダを無効化した後にIDを返す
-    // Disable shader program and return its ID
-    glUseProgram(0);
-    return programId;
-}
-
-// シェーダの初期化
-// Initialization related to shader programs
-void initShaders() {
-    programId = buildShaderProgram(VERT_SHADER_FILE, FRAG_SHADER_FILE);
-}
-
 // ユーザ定義のOpenGLの初期化
 // User-define OpenGL initialization
-void initializeGL() {
+void initializeGL(GLuint& programId) {
     // 深度テストの有効化
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
@@ -316,7 +172,7 @@ void initializeGL() {
 
     // シェーダの用意
     // Prepare shader program
-    initShaders();
+    programId = initShaders();
 
     // カメラの姿勢を決定する変換行列の初期化
     // Initialize transformation matrices for camera pose
@@ -335,7 +191,7 @@ void initializeGL() {
 
 // ユーザ定義のOpenGL描画
 // User-defined OpenGL drawing
-void paintGL() {
+void paintGL(GLuint programId) {
     // 背景色と深度値のクリア
     // Clear background color and depth values
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -576,6 +432,8 @@ void wheelEvent(GLFWwindow *window, double xoffset, double yoffset) {
 }
 
 int main(int argc, char **argv) {
+    GLuint programId;
+
     // OpenGLを初期化する
     // OpenGL initialization
     if (glfwInit() == GLFW_FALSE) {
@@ -632,12 +490,12 @@ int main(int argc, char **argv) {
 
     // ユーザ指定の初期化
     // User-specified initialization
-    initializeGL();
+    initializeGL(programId);
 
     // メインループ
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {
         // 描画 / Draw
-        paintGL();
+        paintGL(programId);
 
         // 描画用バッファの切り替え
         // Swap drawing target buffers
