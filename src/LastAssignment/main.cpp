@@ -23,6 +23,9 @@
 #include <glm/gtx/transform.hpp>
 
 #include "common.h"
+#include "CA.h"
+
+static const int LENGTH = 50;
 
 // 頂点クラス
 // Vertex class
@@ -38,14 +41,14 @@ struct Vertex {
 
 // clang-format off
 static const glm::vec3 positions[8] = {
-    glm::vec3(-1.0f, -1.0f, -1.0f),
-    glm::vec3( 1.0f, -1.0f, -1.0f),
-    glm::vec3(-1.0f,  1.0f, -1.0f),
-    glm::vec3(-1.0f, -1.0f,  1.0f),
-    glm::vec3( 1.0f,  1.0f, -1.0f),
-    glm::vec3(-1.0f,  1.0f,  1.0f),
-    glm::vec3( 1.0f, -1.0f,  1.0f),
-    glm::vec3( 1.0f,  1.0f,  1.0f)
+    glm::vec3(-0.02f, -0.02f, -0.02f),
+    glm::vec3(+0.02f, -0.02f, -0.02f),
+    glm::vec3(-0.02f, +0.02f, -0.02f),
+    glm::vec3(-0.02f, -0.02f, +0.02f),
+    glm::vec3(+0.02f, +0.02f, -0.02f),
+    glm::vec3(-0.02f, +0.02f, +0.02f),
+    glm::vec3(+0.02f, -0.02f, +0.02f),
+    glm::vec3(+0.02f, +0.02f, +0.02f)
 };
 
 static const glm::vec3 colors[6] = {
@@ -81,17 +84,31 @@ void initVAO() {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     int idx = 0;
-    for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 3; j++) {
-            Vertex v(positions[faces[i * 2 + 0][j]], colors[i]);
-            vertices.push_back(v);
-            indices.push_back(idx++);
-        }
+    for (int x = 0; x < LENGTH; x++) {
+        for (int y = 0; y < LENGTH; y++) {
+            for (int z = 0; z < LENGTH; z++) {
+                for (int face = 0; face < 6; face++) {
+                    for (int i = 0; i < 3; i++) {
+                        glm::vec3 v3 = positions[faces[face * 2 + 0][i]];
+                        v3.x -= 0.1 * x;
+                        v3.y -= 0.1 * y;
+                        v3.z -= 0.1 * z;
 
-        for (int j = 0; j < 3; j++) {
-            Vertex v(positions[faces[i * 2 + 1][j]], colors[i]);
-            vertices.push_back(v);
-            indices.push_back(idx++);
+                        vertices.push_back(Vertex(v3, colors[face]));
+                        indices.push_back(idx++);
+                    }
+
+                    for (int i = 0; i < 3; i++) {
+                        glm::vec3 v3 = positions[faces[face * 2 + 1][i]];
+                        v3.x -= 0.1 * x;
+                        v3.y -= 0.1 * y;
+                        v3.z -= 0.1 * z;
+
+                        vertices.push_back(Vertex(v3, colors[face]));
+                        indices.push_back(idx++);
+                    }
+                }
+            }
         }
     }
 
@@ -146,7 +163,7 @@ void initializeGL(GLuint& programId, GLFWwindow* window) {
 
 // ユーザ定義のOpenGL描画
 // User-defined OpenGL drawing
-void paintGL(GLuint programId, GLFWwindow* window) {
+void paintGL(GLuint programId, GLFWwindow* window, CA& ca) {
     // 背景色と深度値のクリア
     // Clear background color and depth values
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -170,9 +187,20 @@ void paintGL(GLuint programId, GLFWwindow* window) {
     // Enable VAO
     glBindVertexArray(vaoId);
 
+    auto&& field = ca.getField();
+
     // 三角形の描画
     // Draw triangles
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    for(int i = 0; i < LENGTH; i++) {
+        for(int j = 0; j < LENGTH; j++) {
+            for(int k = 0; k < LENGTH; k++) {
+                if(field[i][j][k]) {
+                    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 
+                            (void*)(((i * LENGTH * LENGTH) + (j * LENGTH) + k) * sizeof(GLuint) * 36));
+                }
+            }
+        }
+    }
 
     // VAOの無効化
     // Disable VAO
@@ -247,8 +275,12 @@ int main(int argc, char **argv) {
     glfwSetCursorPosCallback(window, motionEvent);
     glfwSetScrollCallback(window, wheelEvent);
 
+    std::vector<int> alive_condition{2, 3, 4, 5};
+    CA ca = CA(LENGTH, alive_condition, 0.1, true);
+
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {
-        paintGL(programId, window);
+        paintGL(programId, window, ca);
+        ca.progressField();
 
         // 描画用バッファの切り替え
         // Swap drawing target buffers

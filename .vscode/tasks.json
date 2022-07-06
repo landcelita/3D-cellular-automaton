@@ -11,6 +11,7 @@
                 "main.cpp",
                 "shaders.cpp",
                 "event_handler.cpp",
+                "CA.cpp",
                 "-I${workspaceFolder}/deps/glfw/include",
                 "-I${workspaceFolder}/deps/glad",
                 "-I${workspaceFolder}/deps/glm",
