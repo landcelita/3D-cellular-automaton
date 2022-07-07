@@ -6,14 +6,14 @@ void print(const std::vector<std::vector<std::vector<bool>>>& v);
 
 int main() {
     std::vector<int> alive_condition{2, 3, 4};
-    CA ca = CA(3, alive_condition, 0.1, false); // Moore-近傍
+    CA ca = CA(3, alive_condition, 0.1, false, true); // Moore-近傍
     print(ca.getField());
     std::cout << "\nNEXT\n";
     ca.progressField();
     print(ca.getField());
     std::cout << "\n\n\n";
 
-    CA ca2 = CA(3, alive_condition, 0.3, true); // Neumann-近傍
+    CA ca2 = CA(3, alive_condition, 0.3, true, true); // Neumann-近傍
     print(ca2.getField());
     std::cout << "\nNEXT\n";
     ca2.progressField();

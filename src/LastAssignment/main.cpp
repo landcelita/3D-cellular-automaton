@@ -275,8 +275,8 @@ int main(int argc, char **argv) {
     glfwSetCursorPosCallback(window, motionEvent);
     glfwSetScrollCallback(window, wheelEvent);
 
-    std::vector<int> alive_condition{2, 3, 4, 5};
-    CA ca = CA(LENGTH, alive_condition, 0.1, true);
+    std::vector<int> alive_condition{3};
+    CA ca = CA(LENGTH, alive_condition, 0.01, false, false);
 
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {
         paintGL(programId, window, ca);

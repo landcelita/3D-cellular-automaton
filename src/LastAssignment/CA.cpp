@@ -1,10 +1,11 @@
 #include "CA.h"
 
-CA::CA(int length, const std::vector<int> alive_condition, float init_alive_ratio, bool isNeumannNeighborhood) {
+CA::CA(int length, const std::vector<int> alive_condition, float init_alive_ratio, bool isNeumannNeighborhood, bool isTorus) {
     this->length = length;
     this->alive_condition = alive_condition;
     this->init_alive_ratio = init_alive_ratio;
     this->isNeumannNeighborhood = isNeumannNeighborhood;
+    this->isTorus = isTorus;
 
     this->field = std::vector<std::vector<std::vector<bool>>>(
         this->length, std::vector<std::vector<bool>>(
@@ -35,16 +36,19 @@ bool CA::isNextAliveWhenNeumann(const int fi, const int fj, const int fk) {
     int count_alive = 0;
 
     for(int di = -1; di <= 1; di += 2) {
+        if((fi + di < 0 || fi + di >= this->length) && !isTorus) continue;
         int i = (fi + this->length + di) % this->length;
         if(this->field[i][fj][fk]) count_alive++;
     }
 
     for(int dj = -1; dj <= 1; dj += 2) {
+        if((fj + dj < 0 || fj + dj >= this->length) && !isTorus) continue;
         int j = (fj + this->length + dj) % this->length;
         if(this->field[fi][j][fk]) count_alive++;
     }
 
     for(int dk = -1; dk <= 1; dk += 2) {
+        if((fk + dk < 0 || fk + dk >= this->length) && !isTorus) continue;
         int k = (fk + this->length + dk) % this->length;
         if(this->field[fi][fj][k]) count_alive++;
     }
@@ -63,6 +67,11 @@ bool CA::isNextAliveWhenMoore(const int fi, const int fj, const int fk) {
         for(int dj = -1; dj <= 1; dj++) {
             for(int dk = -1; dk <= 1; dk++) {
                 if(di == 0 && dj == 0 && dk == 0) continue;
+                if((fi + di < 0 || fi + di >= this->length ||
+                    fj + dj < 0 || fj + dj >= this->length ||
+                    fk + dk < 0 || fk + dk >= this->length) && !isTorus) {
+                    continue;
+                }
                 int i = (fi + this->length + di) % this->length;
                 int j = (fj + this->length + dj) % this->length;
                 int k = (fk + this->length + dk) % this->length;
