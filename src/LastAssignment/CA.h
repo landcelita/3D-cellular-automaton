@@ -9,6 +9,7 @@ class CA
 {
 private:
     int length;
+    std::vector<int> birth_condition;
     std::vector<int> alive_condition;
     float init_alive_ratio;
     bool isNeumannNeighborhood;
@@ -18,7 +19,12 @@ private:
     bool isNextAliveWhenMoore(const int fi, const int fj, const int fk);
 
 public:
-    CA(int length, const std::vector<int> alive_condition, float init_alive_ratio, bool isNeumannNeighborhood, bool isTorus);
+    CA(int length, 
+    const std::vector<int> birth_condition,
+    const std::vector<int> alive_condition, 
+    float init_alive_ratio, 
+    bool isNeumannNeighborhood, 
+    bool isTorus);
     void progressField();
     std::vector<std::vector<std::vector<bool>>> getField();
 };

@@ -275,8 +275,25 @@ int main(int argc, char **argv) {
     glfwSetCursorPosCallback(window, motionEvent);
     glfwSetScrollCallback(window, wheelEvent);
 
-    std::vector<int> alive_condition{3};
-    CA ca = CA(LENGTH, alive_condition, 0.01, false, false);
+    // 面白いパターン1
+    std::vector<int> birth_condition{4};
+    std::vector<int> alive_condition{2};
+    CA ca = CA(LENGTH, birth_condition, alive_condition, 0.01, false, false);
+
+    // 面白いパターン2
+    // std::vector<int> birth_condition{4, 5, 6};
+    // std::vector<int> alive_condition{1};
+    // CA ca = CA(LENGTH, birth_condition, alive_condition, 0.01, false, false);
+
+    // 面白いパターン3
+    // std::vector<int> birth_condition{4};
+    // std::vector<int> alive_condition{2, 6};
+    // CA ca = CA(LENGTH, birth_condition, alive_condition, 0.01, false, false);
+
+    // 面白いパターン4
+    // std::vector<int> birth_condition{5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25};
+    // std::vector<int> alive_condition{4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26};
+    // CA ca = CA(LENGTH, birth_condition, alive_condition, 0.05, false, false);
 
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {
         paintGL(programId, window, ca);

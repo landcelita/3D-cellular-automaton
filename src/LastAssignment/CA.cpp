@@ -1,7 +1,13 @@
 #include "CA.h"
 
-CA::CA(int length, const std::vector<int> alive_condition, float init_alive_ratio, bool isNeumannNeighborhood, bool isTorus) {
+CA::CA(int length,
+    const std::vector<int> birth_condition,
+    const std::vector<int> alive_condition, 
+    float init_alive_ratio, 
+    bool isNeumannNeighborhood, 
+    bool isTorus) {
     this->length = length;
+    this->birth_condition = birth_condition;
     this->alive_condition = alive_condition;
     this->init_alive_ratio = init_alive_ratio;
     this->isNeumannNeighborhood = isNeumannNeighborhood;
@@ -53,8 +59,14 @@ bool CA::isNextAliveWhenNeumann(const int fi, const int fj, const int fk) {
         if(this->field[fi][fj][k]) count_alive++;
     }
 
-    for(const int alive_num: this->alive_condition) {
-        if(count_alive == alive_num) return true;
+    if (this->field[fi][fj][fk]) {
+        for(const int alive_num: this->alive_condition) {
+            if(count_alive == alive_num) return true;
+        }
+    } else {
+        for(const int birth_num: this->birth_condition) {
+            if(count_alive == birth_num) return true;
+        }
     }
 
     return false;
@@ -80,10 +92,15 @@ bool CA::isNextAliveWhenMoore(const int fi, const int fj, const int fk) {
         }
     }
 
-    for(const int alive_num: alive_condition) {
-        if(count_alive == alive_num) return true;
+    if (this->field[fi][fj][fk]) {
+        for(const int alive_num: this->alive_condition) {
+            if(count_alive == alive_num) return true;
+        }
+    } else {
+        for(const int birth_num: this->birth_condition) {
+            if(count_alive == birth_num) return true;
+        }
     }
-
     return false;
 }
 
